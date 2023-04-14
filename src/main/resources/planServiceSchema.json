@@ -1,0 +1,62 @@
+{
+  "type": "object",
+  "properties": {
+    "linkedService": {
+      "$ref": "#/$defs/service"
+    },
+    "planserviceCostShares": {
+      "$ref": "#/$defs/membercostshare"
+    },
+    "_org": {
+      "type": "string"
+    },
+    "objectId": {
+      "type": "string"
+    },
+    "objectType": {
+      "type": "string"
+    }
+  },
+  "required":["linkedService", "planserviceCostShares", "_org", "objectType"],
+  "$defs": {
+    "membercostshare": {
+      "type": "object",
+      "properties": {
+        "deductible": {
+          "type": "number"
+        },
+        "copay": {
+          "type": "number"
+        },
+        "objectId": {
+          "type": "string"
+        },
+        "_org": {
+          "type": "string"
+        },
+        "objectType": {
+          "type": "string"
+        }
+      },
+      "required": ["deductible", "copay", "_org", "objectType"]
+    },
+    "service": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "objectId": {
+          "type": "string"
+        },
+        "_org": {
+          "type": "string"
+        },
+        "objectType": {
+          "type": "string"
+        }
+      },
+      "required":["name", "_org", "objectType"]
+    }
+  }
+}

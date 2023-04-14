@@ -1,0 +1,18 @@
+{
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "objectId": {
+      "type": "string"
+    },
+    "_org": {
+      "type": "string"
+    },
+    "objectType": {
+      "type": "string"
+    }
+  },
+  "required":["name", "_org", "objectType"]
+}

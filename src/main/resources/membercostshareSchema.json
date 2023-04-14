@@ -1,0 +1,22 @@
+{
+  "type": "object",
+  "properties": {
+    "deductible": {
+      "type": "number"
+    },
+    "copay": {
+      "type": "number"
+    },
+    "objectId": {
+      "type": "string"
+    },
+    "_org": {
+      "type": "string"
+    },
+    "objectType": {
+      "type": "string"
+    }
+  },
+  "required": ["deductible", "copay", "_org", "objectType"],
+  "entityFields": []
+}
