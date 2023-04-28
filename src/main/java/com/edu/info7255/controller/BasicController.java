@@ -8,6 +8,8 @@ import com.edu.info7255.DataProcessors.ObjectIdCreator;
 import com.edu.info7255.JwtUtils;
 import com.edu.info7255.ResponseNodeWrapper;
 import com.edu.info7255.Service.ESDocService;
+import com.edu.info7255.Service.ESMQProducerService;
+import com.edu.info7255.Service.ESOperation;
 import com.edu.info7255.utils.Pair;
 import com.edu.info7255.utils.Utility;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -38,7 +40,12 @@ public class BasicController {
     @Autowired
     ESDocService esDocService;
 
-    @PostMapping(value = "/MedicalPlan/save", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Autowired
+    ESMQProducerService producerService;
+
+
+
+    @PostMapping(value = "/MedicalPlan", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> saveNew(@RequestHeader(value = "Authorization") String bearerToken,
                                           @RequestBody ObjectNode requestBody) {
         try {
@@ -70,9 +77,11 @@ public class BasicController {
             saveObjectNodes(listOfNodesToBeSaved);
             saveParentNode(parentMap);
 
-            List<ObjectNode> edDocs = DocToESDocConverter.createESDocs(listOfNodesToBeSaved, parentMap);
+            List<ObjectNode> esDocs = DocToESDocConverter.createESDocs(listOfNodesToBeSaved, parentMap);
 
-            esDocService.saveEsDocs(edDocs, parentMap);
+            //MessageProducer messageProducer = new MessageProducer();
+            producerService.pushESDoc(esDocs, ESOperation.save);
+            //esDocService.saveEsDocs(esDocs, parentMap);
 
             populateNodes(listOfNodesToBeSaved);
 
@@ -88,7 +97,7 @@ public class BasicController {
         }
     }
 
-    @GetMapping(value = "/MedicalPlan/{id}/get", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/MedicalPlan/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> get(@RequestHeader(value = "Authorization") String bearerToken,
                                       @RequestHeader(HttpHeaders.IF_MODIFIED_SINCE) Integer eTag,
                                       @PathVariable(value = "id") String id) {
@@ -130,7 +139,7 @@ public class BasicController {
         }
     }
 
-    @DeleteMapping(value = "/MedicalPlan/{id}/delete", produces = MediaType.APPLICATION_JSON_VALUE)
+    @DeleteMapping(value = "/MedicalPlan/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> delete(@RequestHeader(value = "Authorization") String bearerToken,
                                          @RequestHeader(HttpHeaders.IF_MATCH) Integer eTag,
                                          @PathVariable(value = "id") String id) {
@@ -168,7 +177,8 @@ public class BasicController {
                 deletedMessage = dao.delete(relatedIds) ? "Object with ID: " + id + " deleted successfully"
                         : "Something went wrong try again";
                 dao.delete(relatedIds.stream().map(i -> getEtagKey(i)).collect(Collectors.toList()));
-                esDocService.deleteEsDocs(relatedIds);
+                //esDocService.deleteEsDocs(relatedIds);
+                producerService.pushESDocStrings(relatedIds, ESOperation.delete);
 
             } else {
                 return ResponseEntity.status(PRECONDITION_FAILED).eTag(String.valueOf(etagValue)).build();
@@ -225,9 +235,9 @@ public class BasicController {
                     parentsToBeSaved);
 
             //saving docs to ES
-            List<ObjectNode> edDocs = DocToESDocConverter.createESDocs(objectNodesToBeSaved, parentsToBeSaved);
-            esDocService.saveEsDocs(edDocs, parentsToBeSaved);
-
+            List<ObjectNode> esDocs = DocToESDocConverter.createESDocs(objectNodesToBeSaved, parentsToBeSaved);
+            //esDocService.saveEsDocs(esDocs, parentsToBeSaved);
+            producerService.pushESDoc(esDocs, ESOperation.save);
             //no need to update the parent node in which we are adding new object because ES hai child to parent relation
             //not parent to child
 
@@ -296,8 +306,9 @@ public class BasicController {
             NodePopulator.update(patchNodeWithIds, savedNode, nodesPresentInPatch, objectNodesToBeSaved);
 
             //saving docs to ES
-            List<ObjectNode> edDocs = DocToESDocConverter.createESDocs(objectNodesToBeSaved, parentsToBeSaved);
-            esDocService.updateEsDocs(edDocs);
+            List<ObjectNode> esDocs = DocToESDocConverter.createESDocs(objectNodesToBeSaved, parentsToBeSaved);
+            //esDocService.updateEsDocs(edDocs);
+            producerService.pushESDoc(esDocs, ESOperation.update);
 
             //no need to update the parent node in which we are adding new object because ES hai child to parent relation
             //not parent to child

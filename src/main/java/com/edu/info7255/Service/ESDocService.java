@@ -2,8 +2,10 @@ package com.edu.info7255.Service;
 
 import com.edu.info7255.Dao.Dao;
 import com.edu.info7255.Dao.ElasticSearchDao;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -18,6 +20,9 @@ public class ESDocService {
 
     @Autowired
     private ElasticSearchDao esDao;
+
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
 
     public boolean saveEsDocs(List<ObjectNode> esDocs, Map<String, ArrayNode> parentMap) {
         try {
@@ -36,12 +41,30 @@ public class ESDocService {
         }
     }
 
+    public boolean saveEsDocs(ArrayNode esDocs) {
+        try {
+            for (JsonNode objectNode : esDocs) {
+                ObjectNode joinFieldNode = (ObjectNode) objectNode.get("my_join_field");
+                if (joinFieldNode.has("parent")) {
+                    esDao.saveESDoc((ObjectNode) objectNode, null, joinFieldNode.get("parent").asText());
+                } else {
+                    esDao.saveESDoc((ObjectNode) objectNode, null);
+                }
+            }
+            return true;
+        } catch (Exception e) {
+            System.out.println("Exception while saving es Docs list : " + e);
+            return false;
+        }
+    }
+
+
     public boolean deleteEsDoc(ObjectNode objectNode) {
         try {
             esDao.deleteEsDoc(objectNode.get("objectId").asText());
             return true;
         } catch (Exception e) {
-            System.out.println("Exception while saving es Docs list : " + e);
+            System.out.println("Exception while deleting es Docs list : " + e);
             return false;
         }
     }
@@ -53,7 +76,19 @@ public class ESDocService {
             }
             return true;
         } catch (Exception e) {
-            System.out.println("Exception while saving es Docs list : " + e);
+            System.out.println("Exception while deleting es Docs list : " + e);
+            return false;
+        }
+    }
+
+    public boolean deleteEsDocs(ArrayNode ids) {
+        try {
+            for (JsonNode id : ids) {
+                esDao.deleteEsDoc(id.asText());
+            }
+            return true;
+        } catch (Exception e) {
+            System.out.println("Exception while deleting es Docs list : " + e);
             return false;
         }
     }
@@ -66,7 +101,21 @@ public class ESDocService {
             }
             return true;
         } catch (Exception e) {
-            System.out.println("Exception while saving es Docs list : " + e);
+            System.out.println("Exception while updating es Docs list : " + e);
+            return false;
+        }
+    }
+
+    public boolean updateEsDocs(ArrayNode esDocs) {
+        try {
+            for (JsonNode node : esDocs) {
+                ObjectNode objectNode = (ObjectNode) node;
+                objectNode.remove(JOIN_FIELD_NAME);
+                esDao.updateEsDoc(objectNode, node.get(OBJECT_ID).asText());
+            }
+            return true;
+        } catch (Exception e) {
+            System.out.println("Exception while updating es Docs list : " + e);
             return false;
         }
     }

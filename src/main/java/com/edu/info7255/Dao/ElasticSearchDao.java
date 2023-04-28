@@ -1,6 +1,7 @@
 package com.edu.info7255.Dao;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch._types.Refresh;
 import co.elastic.clients.elasticsearch.core.*;
 import com.edu.info7255.DataProcessors.SchemaContainers;
 import com.edu.info7255.ElasticSearchConfig;
@@ -20,7 +21,7 @@ public class ElasticSearchDao {
             IndexRequest<ObjectNode> indexRequest = IndexRequest.of(i ->
                     i.index(MEDICAL_PLAN_INDEX)
                             .id(objectNode.get("objectId").asText())
-                            .document(objectNode)
+                            .document(objectNode).refresh(Refresh.True)
             );
             IndexResponse response = elasticsearchClient.index(indexRequest);
             System.out.println("Indexed with version " + response.version());
@@ -36,7 +37,7 @@ public class ElasticSearchDao {
             IndexRequest<ObjectNode> indexRequest = IndexRequest.of(i ->
                     i.index(MEDICAL_PLAN_INDEX)
                             .id(objectNode.get("objectId").asText())
-                            .document(objectNode).routing(parentId)
+                            .document(objectNode).routing(parentId).refresh(Refresh.True)
             );
             IndexResponse response = elasticsearchClient.index(indexRequest);
             System.out.println("Indexed with version " + response.version());
@@ -52,7 +53,7 @@ public class ElasticSearchDao {
             ElasticsearchClient elasticsearchClient = ElasticSearchConfig.getClient();
             DeleteRequest deleteRequest = DeleteRequest.of(i ->
                     i.index(MEDICAL_PLAN_INDEX)
-                            .id(id)
+                            .id(id).refresh(Refresh.True)
             );
             DeleteResponse response = elasticsearchClient.delete(deleteRequest);
             System.out.println("Indexed with version " + response.version());
@@ -69,7 +70,7 @@ public class ElasticSearchDao {
             ElasticsearchClient elasticsearchClient = ElasticSearchConfig.getClient();
             UpdateRequest updateRequest = UpdateRequest.of(i ->
                     i.index(MEDICAL_PLAN_INDEX)
-                            .id(id).doc(node)
+                            .id(id).doc(node).refresh(Refresh.True)
             );
             UpdateResponse<ObjectNode> response = elasticsearchClient.update(updateRequest, ObjectNode.class);
             System.out.println("Indexed with version " + response);
